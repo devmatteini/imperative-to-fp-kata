@@ -11,20 +11,33 @@ import sharp from "sharp"
 
 import { imageTypesRegex } from "./resize-images"
 import * as Effect from "effect/Effect"
+import { FileSystem } from "@effect/platform"
+import { Data } from "effect"
 
 const WIDTH_THRESHOLD = 1500
 
+export class NoSourceDirectoryError extends Data.TaggedError(
+    "NoSourceDirectoryError",
+)<{
+    sourceDir: string
+}> {}
+
+const checkSourceDirectoryExists = (sourceDir: string) =>
+    Effect.gen(function* (_) {
+        const fs = yield* _(FileSystem.FileSystem)
+        const exists = yield* _(fs.exists(sourceDir))
+
+        if (!exists) yield* _(new NoSourceDirectoryError({ sourceDir }))
+    })
+
 export const compress = (sourceDir: string, outputDir: string) =>
     Effect.gen(function* (_) {
+        yield* _(checkSourceDirectoryExists(sourceDir))
+
         yield* _(Effect.promise(() => main(sourceDir, outputDir)))
     })
 
 export async function main(sourceDir: string, outputDir: string) {
-    if (!existsSync(sourceDir)) {
-        console.error(`\nSource directory ${sourceDir} does not exist\n`)
-        process.exit(1)
-    }
-
     console.log(`\nReading images from ${sourceDir}\n`)
 
     const outputDirAbsolute = path.join(sourceDir, outputDir)
