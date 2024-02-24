@@ -19,7 +19,8 @@
     "freshstart": "rimraf .git && git init && git add -A && git commit -m 'Initial commit'"
   },
   "dependencies": {
-    "effect": "2.4.0"
+    "effect": "2.4.0",
+    "@effect/cli": "0.34.1"
   },
   "devDependencies": {
     "@types/node": "18.15.3",
