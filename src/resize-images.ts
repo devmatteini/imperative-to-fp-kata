@@ -1,6 +1,6 @@
 import { Command } from "@effect/cli"
 import * as Effect from "effect/Effect"
-import { main as compress } from "./images-compress"
+import { compress } from "./images-compress"
 import { main as writeJson } from "./images-json"
 import path from "path"
 
@@ -14,11 +14,7 @@ const jsonOutputFile = "images.json"
 
 export const resizeImages = Command.make("resize-images", {}, () =>
     Effect.gen(function* (_) {
-        yield* _(
-            Effect.promise(() =>
-                compress(sourceDirAbsolute, compressOutputDir),
-            ),
-        )
+        yield* _(compress(sourceDirAbsolute, compressOutputDir))
 
         yield* _(
             Effect.promise(() =>

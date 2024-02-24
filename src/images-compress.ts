@@ -10,8 +10,14 @@ import * as path from "path"
 import sharp from "sharp"
 
 import { imageTypesRegex } from "./resize-images"
+import * as Effect from "effect/Effect"
 
 const WIDTH_THRESHOLD = 1500
+
+export const compress = (sourceDir: string, outputDir: string) =>
+    Effect.gen(function* (_) {
+        yield* _(Effect.promise(() => main(sourceDir, outputDir)))
+    })
 
 export async function main(sourceDir: string, outputDir: string) {
     if (!existsSync(sourceDir)) {
