@@ -31,12 +31,12 @@ export const compress = (sourceDir: string, outputDir: string) =>
     Effect.gen(function* (_) {
         yield* _(checkSourceDirectoryExists(sourceDir))
 
+        yield* _(Effect.logInfo(`Reading images from ${sourceDir}`))
+
         yield* _(Effect.promise(() => main(sourceDir, outputDir)))
     })
 
 export async function main(sourceDir: string, outputDir: string) {
-    console.log(`\nReading images from ${sourceDir}\n`)
-
     const outputDirAbsolute = path.join(sourceDir, outputDir)
     rmSync(outputDirAbsolute, { recursive: true, force: true })
     mkdirSync(outputDirAbsolute, { recursive: true })
