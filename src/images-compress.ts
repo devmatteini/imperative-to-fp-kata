@@ -33,6 +33,7 @@ const safeRemove = (dir: string) =>
     Effect.gen(function* (_) {
         const fs = yield* _(FileSystem.FileSystem)
         const exists = yield* _(fs.exists(dir))
+        // TODO: add force: boolean option as node rmSync
         if (exists) yield* _(fs.remove(dir, { recursive: true }))
     })
 
