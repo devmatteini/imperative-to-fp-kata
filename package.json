@@ -15,7 +15,8 @@
     "tc": "npm run typecheck",
     "tc:w": "npm run typecheck:w",
     "lint": "eslint src",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:w": "vitest watch",
     "freshstart": "rimraf .git && git init && git add -A && git commit -m 'Initial commit'"
   },
   "dependencies": {
