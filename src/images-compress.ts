@@ -1,11 +1,4 @@
-import {
-    copyFileSync,
-    existsSync,
-    mkdirSync,
-    readdirSync,
-    rmSync,
-    statSync,
-} from "fs"
+import { copyFileSync, mkdirSync, readdirSync, rmSync, statSync } from "fs"
 import * as path from "path"
 import sharp from "sharp"
 
@@ -20,7 +13,11 @@ export class NoSourceDirectoryError extends Data.TaggedError(
     "NoSourceDirectoryError",
 )<{
     sourceDir: string
-}> {}
+}> {
+    override toString(): string {
+        return `Source directory ${this.sourceDir} does not exist`
+    }
+}
 
 const checkSourceDirectoryExists = (sourceDir: string) =>
     Effect.gen(function* (_) {
