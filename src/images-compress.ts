@@ -1,4 +1,4 @@
-import { copyFileSync, readdirSync, statSync } from "fs"
+import { copyFileSync, statSync } from "fs"
 import * as path from "path"
 import sharp from "sharp"
 
@@ -6,6 +6,8 @@ import { imageTypesRegex } from "./resize-images"
 import * as Effect from "effect/Effect"
 import { FileSystem } from "@effect/platform"
 import { Data } from "effect"
+import * as F from "effect/Function"
+import * as ROA from "effect/ReadonlyArray"
 
 const WIDTH_THRESHOLD = 1500
 
@@ -46,24 +48,22 @@ export const compress = (sourceDir: string, outputDir: string) =>
         yield* _(safeRemove(outputDirAbsolute))
         yield* _(fs.makeDirectory(outputDirAbsolute, { recursive: true }))
 
-        yield* _(Effect.promise(() => main(sourceDir, outputDir)))
-    })
-
-export async function main(sourceDir: string, outputDir: string) {
-    // TODO: remove duplicated
-    const outputDirAbsolute = path.join(sourceDir, outputDir)
-
-    const tasks = readdirSync(sourceDir)
-        // keep-line
-        .filter((file) => file.match(imageTypesRegex))
-        .map((file) =>
-            processOne(path.join(sourceDir, file), outputDirAbsolute),
+        const files = yield* _(fs.readDirectory(sourceDir))
+        const filesToBeProcessed = F.pipe(
+            files,
+            ROA.filter((file) => imageTypesRegex.test(file)),
+            ROA.map((file) =>
+                Effect.promise(() =>
+                    processOne(path.join(sourceDir, file), outputDirAbsolute),
+                ),
+            ),
         )
-    const results = await Promise.all(tasks)
 
-    console.log(`\nProcessed ${results.length} images \n`)
-    console.log(`\nDONE\n`)
-}
+        const results = yield* _(Effect.all(filesToBeProcessed))
+
+        yield* _(Effect.logInfo(`Processed ${results.length} images`))
+        yield* _(Effect.logInfo("DONE"))
+    })
 
 async function processOne(inputFile: string, outputDir: string) {
     const fileName = path.basename(inputFile)
