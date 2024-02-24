@@ -2,7 +2,8 @@ import { mkdirSync, readdirSync, writeFileSync } from "fs"
 import * as path from "path"
 import sharp from "sharp"
 import { pick } from "../src/common/object"
-import { imageTypesRegex } from "./index"
+
+import { imageTypesRegex } from "./resize-images"
 
 export async function main(
     sourceDir: string,

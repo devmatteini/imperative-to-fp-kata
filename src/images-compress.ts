@@ -8,7 +8,8 @@ import {
 } from "fs"
 import * as path from "path"
 import sharp from "sharp"
-import { imageTypesRegex } from "./index"
+
+import { imageTypesRegex } from "./resize-images"
 
 const WIDTH_THRESHOLD = 1500
 
