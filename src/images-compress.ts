@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, readdirSync, rmSync, statSync } from "fs"
+import { copyFileSync, readdirSync, statSync } from "fs"
 import * as path from "path"
 import sharp from "sharp"
 
@@ -27,19 +27,31 @@ const checkSourceDirectoryExists = (sourceDir: string) =>
         if (!exists) yield* _(new NoSourceDirectoryError({ sourceDir }))
     })
 
+const safeRemove = (dir: string) =>
+    Effect.gen(function* (_) {
+        const fs = yield* _(FileSystem.FileSystem)
+        const exists = yield* _(fs.exists(dir))
+        if (exists) yield* _(fs.remove(dir, { recursive: true }))
+    })
+
 export const compress = (sourceDir: string, outputDir: string) =>
     Effect.gen(function* (_) {
+        const fs = yield* _(FileSystem.FileSystem)
+
         yield* _(checkSourceDirectoryExists(sourceDir))
 
         yield* _(Effect.logInfo(`Reading images from ${sourceDir}`))
+
+        const outputDirAbsolute = path.join(sourceDir, outputDir)
+        yield* _(safeRemove(outputDirAbsolute))
+        yield* _(fs.makeDirectory(outputDirAbsolute, { recursive: true }))
 
         yield* _(Effect.promise(() => main(sourceDir, outputDir)))
     })
 
 export async function main(sourceDir: string, outputDir: string) {
+    // TODO: remove duplicated
     const outputDirAbsolute = path.join(sourceDir, outputDir)
-    rmSync(outputDirAbsolute, { recursive: true, force: true })
-    mkdirSync(outputDirAbsolute, { recursive: true })
 
     const tasks = readdirSync(sourceDir)
         // keep-line
