@@ -48,9 +48,8 @@ export const compress = (sourceDir: string, outputDir: string) =>
         yield* _(safeRemove(outputDirAbsolute))
         yield* _(fs.makeDirectory(outputDirAbsolute, { recursive: true }))
 
-        const files = yield* _(fs.readDirectory(sourceDir))
         const filesToBeProcessed = F.pipe(
-            files,
+            yield* _(fs.readDirectory(sourceDir)),
             ROA.filter((file) => imageTypesRegex.test(file)),
             ROA.map((file) =>
                 Effect.promise(() =>
@@ -59,7 +58,9 @@ export const compress = (sourceDir: string, outputDir: string) =>
             ),
         )
 
-        const results = yield* _(Effect.all(filesToBeProcessed))
+        const results = yield* _(
+            Effect.all(filesToBeProcessed, { concurrency: 5 }),
+        )
 
         yield* _(Effect.logInfo(`Processed ${results.length} images`))
         yield* _(Effect.logInfo("DONE"))
