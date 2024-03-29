@@ -53,9 +53,7 @@ export const compress = (sourceDir: string, outputDir: string) =>
             yield* _(fs.readDirectory(sourceDir)),
             ROA.filter((file) => imageTypesRegex.test(file)),
             ROA.map((file) =>
-                Effect.promise(() =>
-                    processOne(path.join(sourceDir, file), outputDirAbsolute),
-                ),
+                processOneEffect(path.join(sourceDir, file), outputDirAbsolute),
             ),
         )
 
@@ -65,6 +63,11 @@ export const compress = (sourceDir: string, outputDir: string) =>
 
         yield* _(Effect.logInfo(`Processed ${results.length} images`))
         yield* _(Effect.logInfo("DONE"))
+    })
+
+const processOneEffect = (inputFile: string, outputDir: string) =>
+    Effect.gen(function* (_) {
+        return yield* _(Effect.promise(() => processOne(inputFile, outputDir)))
     })
 
 async function processOne(inputFile: string, outputDir: string) {
