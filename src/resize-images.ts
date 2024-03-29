@@ -18,11 +18,7 @@ export const resizeImages = Command.make("resize-images", {}, () =>
 
         yield* _(
             Effect.promise(() =>
-                writeJson(
-                    processedDirAbsolute,
-                    jsonOutputFile,
-                    finalImageSrcBaseUrl,
-                ),
+                writeJson(processedDirAbsolute, jsonOutputFile, finalImageSrcBaseUrl),
             ),
         )
     }),

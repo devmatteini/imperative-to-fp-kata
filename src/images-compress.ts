@@ -10,9 +10,7 @@ import * as ROA from "effect/ReadonlyArray"
 
 const WIDTH_THRESHOLD = 1500
 
-export class NoSourceDirectoryError extends Data.TaggedError(
-    "NoSourceDirectoryError",
-)<{
+export class NoSourceDirectoryError extends Data.TaggedError("NoSourceDirectoryError")<{
     sourceDir: string
 }> {
     override toString(): string {
@@ -51,14 +49,10 @@ export const compress = (sourceDir: string, outputDir: string) =>
         const filesToBeProcessed = F.pipe(
             yield* _(fs.readDirectory(sourceDir)),
             ROA.filter((file) => imageTypesRegex.test(file)),
-            ROA.map((file) =>
-                processOne(path.join(sourceDir, file), outputDirAbsolute),
-            ),
+            ROA.map((file) => processOne(path.join(sourceDir, file), outputDirAbsolute)),
         )
 
-        const results = yield* _(
-            Effect.all(filesToBeProcessed, { concurrency: 5 }),
-        )
+        const results = yield* _(Effect.all(filesToBeProcessed, { concurrency: 5 }))
 
         yield* _(Effect.logInfo(`Processed ${results.length} images`))
         yield* _(Effect.logInfo("DONE"))
@@ -71,18 +65,12 @@ const processOne = (inputFile: string, outputDir: string) =>
         const fileName = path.basename(inputFile)
         const outputFile = path.join(outputDir, `${fileName}.webp`)
 
-        const metadata = yield* _(
-            Effect.promise(() => sharp(inputFile).metadata()),
-        )
+        const metadata = yield* _(Effect.promise(() => sharp(inputFile).metadata()))
 
         const stat = yield* _(fs.stat(inputFile))
         const sizeInKb = Number(stat.size) / 1024
 
-        if (
-            sizeInKb < 50 ||
-            !metadata.width ||
-            metadata.width < WIDTH_THRESHOLD
-        ) {
+        if (sizeInKb < 50 || !metadata.width || metadata.width < WIDTH_THRESHOLD) {
             yield* _(fs.copyFile(inputFile, outputFile))
             return { name: outputFile }
         }

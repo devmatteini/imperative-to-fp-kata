@@ -8,7 +8,4 @@ const cli = Command.run(resizeImages, {
     version: "v1.0.0",
 })
 
-Effect.suspend(() => cli(process.argv)).pipe(
-    Effect.provide(NodeContext.layer),
-    NodeRuntime.runMain,
-)
+Effect.suspend(() => cli(process.argv)).pipe(Effect.provide(NodeContext.layer), NodeRuntime.runMain)

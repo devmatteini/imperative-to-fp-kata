@@ -5,11 +5,7 @@ import { pick } from "../src/common/object"
 
 import { imageTypesRegex } from "./resize-images"
 
-export async function main(
-    sourceDir: string,
-    outputFile: string,
-    finalImageSrcBaseUrl: string,
-) {
+export async function main(sourceDir: string, outputFile: string, finalImageSrcBaseUrl: string) {
     console.log(`\nReading images from ${sourceDir}\n`)
 
     const outputFileAbsolute = path.join(sourceDir, outputFile)
@@ -17,9 +13,7 @@ export async function main(
     const tasks = readdirSync(sourceDir)
         // keep-line
         .filter((file) => file.match(imageTypesRegex))
-        .map((file) =>
-            processOne(path.join(sourceDir, file), finalImageSrcBaseUrl),
-        )
+        .map((file) => processOne(path.join(sourceDir, file), finalImageSrcBaseUrl))
     const results = await Promise.all(tasks)
 
     console.log(`\nWriting results to ${outputFileAbsolute}\n`)
@@ -31,10 +25,7 @@ export async function main(
 
 async function processOne(file: string, finalImageSrcBaseUrl: string) {
     const metadata = await sharp(file).metadata()
-    const selectedMetadata = pick(
-        ["width", "height", "format", "orientation"],
-        metadata,
-    )
+    const selectedMetadata = pick(["width", "height", "format", "orientation"], metadata)
 
     const fileName = path.basename(file)
     return { src: `${finalImageSrcBaseUrl}/${fileName}`, ...selectedMetadata }
