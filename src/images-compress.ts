@@ -1,4 +1,3 @@
-import { copyFileSync, statSync } from "fs"
 import * as path from "path"
 import sharp from "sharp"
 
@@ -8,7 +7,6 @@ import { FileSystem } from "@effect/platform"
 import { Data } from "effect"
 import * as F from "effect/Function"
 import * as ROA from "effect/ReadonlyArray"
-import { Size } from "@effect/platform/FileSystem"
 
 const WIDTH_THRESHOLD = 1500
 
@@ -54,7 +52,7 @@ export const compress = (sourceDir: string, outputDir: string) =>
             yield* _(fs.readDirectory(sourceDir)),
             ROA.filter((file) => imageTypesRegex.test(file)),
             ROA.map((file) =>
-                processOneEffect(path.join(sourceDir, file), outputDirAbsolute),
+                processOne(path.join(sourceDir, file), outputDirAbsolute),
             ),
         )
 
@@ -66,7 +64,7 @@ export const compress = (sourceDir: string, outputDir: string) =>
         yield* _(Effect.logInfo("DONE"))
     })
 
-const processOneEffect = (inputFile: string, outputDir: string) =>
+const processOne = (inputFile: string, outputDir: string) =>
     Effect.gen(function* (_) {
         const fs = yield* _(FileSystem.FileSystem)
 
