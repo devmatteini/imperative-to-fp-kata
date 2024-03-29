@@ -25,17 +25,14 @@ export const writeJson = (sourceDir: string, outputFile: string, finalImageSrcBa
         )
         const results = yield* _(Effect.all(tasks, { concurrency: 5 }))
 
-        return yield* _(Effect.promise(() => main(sourceDir, outputFile, results)))
+        const outputFileAbsolute = path.join(sourceDir, outputFile)
+        yield* _(Effect.logInfo(`\nWriting results to ${outputFileAbsolute}\n`))
+
+        // TODO: use effect fs
+        writeOutputFile(outputFileAbsolute, results)
+
+        yield* _(Effect.logInfo(`\nDONE\n`))
     })
-
-async function main(sourceDir: string, outputFile: string, results: unknown[]) {
-    const outputFileAbsolute = path.join(sourceDir, outputFile)
-    console.log(`\nWriting results to ${outputFileAbsolute}\n`)
-
-    writeOutputFile(outputFileAbsolute, results)
-
-    console.log(`\nDONE\n`)
-}
 
 async function processOne(file: string, finalImageSrcBaseUrl: string) {
     const metadata = await sharp(file).metadata()
