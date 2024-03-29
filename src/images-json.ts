@@ -19,9 +19,7 @@ export const writeJson = (sourceDir: string, outputFile: string, finalImageSrcBa
         const tasks = F.pipe(
             dir,
             ROA.filter((file) => imageTypesRegex.test(file)),
-            ROA.map((file) =>
-                Effect.promise(() => processOne(path.join(sourceDir, file), finalImageSrcBaseUrl)),
-            ),
+            ROA.map((file) => processOne(path.join(sourceDir, file), finalImageSrcBaseUrl)),
         )
         const results = yield* _(Effect.all(tasks, { concurrency: 5 }))
 
@@ -34,13 +32,14 @@ export const writeJson = (sourceDir: string, outputFile: string, finalImageSrcBa
         yield* _(Effect.logInfo(`\nDONE\n`))
     })
 
-async function processOne(file: string, finalImageSrcBaseUrl: string) {
-    const metadata = await sharp(file).metadata()
-    const selectedMetadata = pick(["width", "height", "format", "orientation"], metadata)
+const processOne = (file: string, finalImageSrcBaseUrl: string) =>
+    Effect.gen(function* (_) {
+        const metadata = yield* _(Effect.promise(() => sharp(file).metadata()))
+        const selectedMetadata = pick(["width", "height", "format", "orientation"], metadata)
 
-    const fileName = path.basename(file)
-    return { src: `${finalImageSrcBaseUrl}/${fileName}`, ...selectedMetadata }
-}
+        const fileName = path.basename(file)
+        return { src: `${finalImageSrcBaseUrl}/${fileName}`, ...selectedMetadata }
+    })
 
 function writeOutputFile(outputFile: string, content: unknown[]) {
     const outputFileDir = path.dirname(outputFile)
