@@ -8,6 +8,7 @@ import { FileSystem } from "@effect/platform"
 import { Data } from "effect"
 import * as F from "effect/Function"
 import * as ROA from "effect/ReadonlyArray"
+import { Size } from "@effect/platform/FileSystem"
 
 const WIDTH_THRESHOLD = 1500
 
@@ -67,6 +68,8 @@ export const compress = (sourceDir: string, outputDir: string) =>
 
 const processOneEffect = (inputFile: string, outputDir: string) =>
     Effect.gen(function* (_) {
+        const fs = yield* _(FileSystem.FileSystem)
+
         const fileName = path.basename(inputFile)
         const outputFile = path.join(outputDir, `${fileName}.webp`)
 
@@ -74,8 +77,13 @@ const processOneEffect = (inputFile: string, outputDir: string) =>
             Effect.promise(() => sharp(inputFile).metadata()),
         )
 
+        const stat = yield* _(fs.stat(inputFile))
+        const sizeInKb = Number(stat.size) / 1024
+
         return yield* _(
-            Effect.promise(() => processOne(inputFile, outputFile, metadata)),
+            Effect.promise(() =>
+                processOne(inputFile, outputFile, metadata, sizeInKb),
+            ),
         )
     })
 
@@ -83,10 +91,8 @@ async function processOne(
     inputFile: string,
     outputFile: string,
     metadata: sharp.Metadata,
+    sizeInKb: number,
 ) {
-    const stat = statSync(inputFile)
-    const sizeInKb = stat.size / 1024
-
     if (sizeInKb < 50 || !metadata.width || metadata.width < WIDTH_THRESHOLD) {
         copyFileSync(inputFile, outputFile)
         return { name: outputFile }
