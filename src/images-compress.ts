@@ -80,28 +80,26 @@ const processOneEffect = (inputFile: string, outputDir: string) =>
         const stat = yield* _(fs.stat(inputFile))
         const sizeInKb = Number(stat.size) / 1024
 
-        return yield* _(
+        if (
+            sizeInKb < 50 ||
+            !metadata.width ||
+            metadata.width < WIDTH_THRESHOLD
+        ) {
+            yield* _(fs.copyFile(inputFile, outputFile))
+            return { name: outputFile }
+        }
+
+        const info = yield* _(
             Effect.promise(() =>
-                processOne(inputFile, outputFile, metadata, sizeInKb),
+                sharp(inputFile)
+                    .resize({
+                        width: WIDTH_THRESHOLD,
+                        withoutEnlargement: true,
+                    })
+                    .withMetadata()
+                    .webp({ lossless: false, quality: 80 })
+                    .toFile(outputFile),
             ),
         )
-    })
-
-async function processOne(
-    inputFile: string,
-    outputFile: string,
-    metadata: sharp.Metadata,
-    sizeInKb: number,
-) {
-    if (sizeInKb < 50 || !metadata.width || metadata.width < WIDTH_THRESHOLD) {
-        copyFileSync(inputFile, outputFile)
-        return { name: outputFile }
-    } else {
-        const info = await sharp(inputFile)
-            .resize({ width: WIDTH_THRESHOLD, withoutEnlargement: true })
-            .withMetadata()
-            .webp({ lossless: false, quality: 80 })
-            .toFile(outputFile)
         return { name: outputFile, ...info }
-    }
-}
+    })
