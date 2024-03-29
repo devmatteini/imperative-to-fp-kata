@@ -1,4 +1,3 @@
-import { mkdirSync, writeFileSync } from "fs"
 import * as path from "path"
 import sharp from "sharp"
 import { pick } from "./common/object"
@@ -26,8 +25,7 @@ export const writeJson = (sourceDir: string, outputFile: string, finalImageSrcBa
         const outputFileAbsolute = path.join(sourceDir, outputFile)
         yield* _(Effect.logInfo(`\nWriting results to ${outputFileAbsolute}\n`))
 
-        // TODO: use effect fs
-        writeOutputFile(outputFileAbsolute, results)
+        yield* _(writeOutputFile(outputFileAbsolute, results))
 
         yield* _(Effect.logInfo(`\nDONE\n`))
     })
@@ -41,8 +39,11 @@ const processOne = (file: string, finalImageSrcBaseUrl: string) =>
         return { src: `${finalImageSrcBaseUrl}/${fileName}`, ...selectedMetadata }
     })
 
-function writeOutputFile(outputFile: string, content: unknown[]) {
-    const outputFileDir = path.dirname(outputFile)
-    mkdirSync(outputFileDir, { recursive: true })
-    writeFileSync(outputFile, JSON.stringify(content, null, 2), {})
-}
+const writeOutputFile = (outputFile: string, content: unknown[]) =>
+    Effect.gen(function* (_) {
+        const fs = yield* _(FileSystem.FileSystem)
+        const outputFileDir = path.dirname(outputFile)
+
+        yield* _(fs.makeDirectory(outputFileDir, { recursive: true }))
+        yield* _(fs.writeFileString(outputFile, JSON.stringify(content, null, 2)))
+    })
