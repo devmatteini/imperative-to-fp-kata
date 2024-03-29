@@ -67,14 +67,23 @@ export const compress = (sourceDir: string, outputDir: string) =>
 
 const processOneEffect = (inputFile: string, outputDir: string) =>
     Effect.gen(function* (_) {
-        return yield* _(Effect.promise(() => processOne(inputFile, outputDir)))
+        const fileName = path.basename(inputFile)
+        const outputFile = path.join(outputDir, `${fileName}.webp`)
+
+        const metadata = yield* _(
+            Effect.promise(() => sharp(inputFile).metadata()),
+        )
+
+        return yield* _(
+            Effect.promise(() => processOne(inputFile, outputFile, metadata)),
+        )
     })
 
-async function processOne(inputFile: string, outputDir: string) {
-    const fileName = path.basename(inputFile)
-    const outputFile = path.join(outputDir, `${fileName}.webp`)
-
-    const metadata = await sharp(inputFile).metadata()
+async function processOne(
+    inputFile: string,
+    outputFile: string,
+    metadata: sharp.Metadata,
+) {
     const stat = statSync(inputFile)
     const sizeInKb = stat.size / 1024
 
