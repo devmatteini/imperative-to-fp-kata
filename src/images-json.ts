@@ -1,27 +1,35 @@
-import { mkdirSync, readdirSync, writeFileSync } from "fs"
+import { mkdirSync, writeFileSync } from "fs"
 import * as path from "path"
 import sharp from "sharp"
-import { pick } from "../src/common/object"
+import { pick } from "./common/object"
 
 import { imageTypesRegex } from "./resize-images"
 import * as Effect from "effect/Effect"
+import { FileSystem } from "@effect/platform"
+import * as F from "effect/Function"
+import * as ROA from "effect/ReadonlyArray"
 
 export const writeJson = (sourceDir: string, outputFile: string, finalImageSrcBaseUrl: string) =>
     Effect.gen(function* (_) {
-        return yield* _(Effect.promise(() => main(sourceDir, outputFile, finalImageSrcBaseUrl)))
+        const fs = yield* _(FileSystem.FileSystem)
+
+        yield* _(Effect.logInfo(`\nReading images from ${sourceDir}\n`))
+
+        const dir = yield* _(fs.readDirectory(sourceDir))
+        const tasks = F.pipe(
+            dir,
+            ROA.filter((file) => imageTypesRegex.test(file)),
+            ROA.map((file) =>
+                Effect.promise(() => processOne(path.join(sourceDir, file), finalImageSrcBaseUrl)),
+            ),
+        )
+        const results = yield* _(Effect.all(tasks, { concurrency: 5 }))
+
+        return yield* _(Effect.promise(() => main(sourceDir, outputFile, results)))
     })
 
-async function main(sourceDir: string, outputFile: string, finalImageSrcBaseUrl: string) {
-    console.log(`\nReading images from ${sourceDir}\n`)
-
+async function main(sourceDir: string, outputFile: string, results: unknown[]) {
     const outputFileAbsolute = path.join(sourceDir, outputFile)
-
-    const tasks = readdirSync(sourceDir)
-        // keep-line
-        .filter((file) => file.match(imageTypesRegex))
-        .map((file) => processOne(path.join(sourceDir, file), finalImageSrcBaseUrl))
-    const results = await Promise.all(tasks)
-
     console.log(`\nWriting results to ${outputFileAbsolute}\n`)
 
     writeOutputFile(outputFileAbsolute, results)
