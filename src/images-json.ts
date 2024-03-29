@@ -4,8 +4,14 @@ import sharp from "sharp"
 import { pick } from "../src/common/object"
 
 import { imageTypesRegex } from "./resize-images"
+import * as Effect from "effect/Effect"
 
-export async function main(sourceDir: string, outputFile: string, finalImageSrcBaseUrl: string) {
+export const writeJson = (sourceDir: string, outputFile: string, finalImageSrcBaseUrl: string) =>
+    Effect.gen(function* (_) {
+        return yield* _(Effect.promise(() => main(sourceDir, outputFile, finalImageSrcBaseUrl)))
+    })
+
+async function main(sourceDir: string, outputFile: string, finalImageSrcBaseUrl: string) {
     console.log(`\nReading images from ${sourceDir}\n`)
 
     const outputFileAbsolute = path.join(sourceDir, outputFile)

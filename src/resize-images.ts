@@ -1,7 +1,7 @@
 import { Command } from "@effect/cli"
 import * as Effect from "effect/Effect"
 import { compress } from "./images-compress"
-import { main as writeJson } from "./images-json"
+import { writeJson } from "./images-json"
 import path from "path"
 
 export const imageTypesRegex = /\.(png|jpeg|jpg|webp)$/i
@@ -16,10 +16,6 @@ export const resizeImages = Command.make("resize-images", {}, () =>
     Effect.gen(function* (_) {
         yield* _(compress(sourceDirAbsolute, compressOutputDir))
 
-        yield* _(
-            Effect.promise(() =>
-                writeJson(processedDirAbsolute, jsonOutputFile, finalImageSrcBaseUrl),
-            ),
-        )
+        yield* _(writeJson(processedDirAbsolute, jsonOutputFile, finalImageSrcBaseUrl))
     }),
 )
